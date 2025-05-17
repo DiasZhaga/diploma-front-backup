@@ -85,7 +85,8 @@
 /*** Navbar ***/
 .nav-bar {
     position: relative;
-    padding: 0 3rem;
+    padding-top: 0.25rem;    
+    padding-bottom: 0.25rem;
     transition: .5s;
     z-index: 9999;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
@@ -98,9 +99,6 @@
     z-index: 9999;
 }
 
-.navbar {
-    box-shadow: 0 0 30px rgba(0, 0, 0, .08);
-}
 
 .navbar .dropdown-toggle::after {
     border: none;
@@ -118,7 +116,8 @@
 
 .navbar-light .navbar-nav .nav-link {
     margin-right: 30px;
-    padding: 25px 0;
+    padding-top: 22px;       
+    padding-bottom: 22px;    
     color: #FFFFFF;
     font-size: 15px;
     text-transform: uppercase;
@@ -156,26 +155,31 @@
 }
 
 @media (min-width: 992px) {
-    .navbar .nav-item .dropdown-menu {
-        display: block;
-        top: 100%;
-        margin-top: 0;
-        transform: rotateX(-75deg);
-        transform-origin: 0% 0%;
-        opacity: 0;
-        visibility: hidden;
-        transition: .5s;
-        
-    }
+  .navbar .nav-item .dropdown-menu {
+    display: block;
+    top: 100%;
+    margin-top: 0;
 
-    .navbar .nav-item:hover .dropdown-menu {
-        transform: rotateX(0deg);
-        visibility: visible;
-        transition: .5s;
-        opacity: 1;
-    }
+    /* комбинируем translateX и rotateX */
+    transform: translateX(-50%) rotateX(-75deg);
+    transform-origin: top left;
+
+    /* отключаем правую привязку */
+    right: auto !important;
+    /* привязываем левый край к середине кнопки */
+    left: 50%;
+
+    opacity: 0;
+    visibility: hidden;
+    transition: transform .5s, opacity .5s;
+  }
+
+  .navbar .nav-item:hover .dropdown-menu {
+    transform: translateX(-50%) rotateX(0deg);
+    visibility: visible;
+    opacity: 1;
+  }
 }
-
 
 /*** Header ***/
 @media (min-width: 992px) {
@@ -561,25 +565,28 @@
   }
   
   .auth-tabs {
-    display: flex;
-    border-bottom: 1px solid #ddd;
-    margin-bottom: 20px;
-  }
-  
-  .auth-tabs button {
-    flex: 1;
-    background: none;
-    border: none;
-    padding: 10px;
-    font-weight: bold;
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-  }
-  
-  .auth-tabs button.active {
-    color: #0d6efd;
-    border-bottom: 2px solid #0d6efd;
-  }
+  display: flex;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 1.5rem;
+}
+
+.auth-tabs button {
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 0.5rem 1rem;
+  font-weight: bold;
+  color: #444;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.auth-tabs button.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
   
   .auth-form label {
     display: block;
@@ -596,6 +603,7 @@
     border-radius: 10px;
     margin-bottom: 10px;
     background-color: #f9f9f9;
+    margin-bottom: 18px;
   }
   
   .password-rules {
@@ -694,4 +702,9 @@
     background-color: transparent;
     box-shadow: none;
   }
+  
+  .page-content {
+      padding-top: 20px;
+  }   
+
   

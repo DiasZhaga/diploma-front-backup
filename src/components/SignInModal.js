@@ -7,7 +7,7 @@ const SignInModal = ({ onClose }) => {
       <div className="auth-modal-overlay">
         <div className="auth-modal">
           <button className="auth-close" onClick={onClose}>&times;</button>
-          <h2 className="auth-title">Welcome to NeKrisha</h2>
+          <h2 className="auth-title">Welcome to Domly</h2>
   
           <div className="auth-tabs">
             <button className={isSignIn ? "active" : ""} onClick={() => setIsSignIn(true)}>Sign in</button>
@@ -33,7 +33,9 @@ const SignInModal = ({ onClose }) => {
               </>
             )}
   
-            <button type="submit" className="auth-submit">{isSignIn ? "Sign in" : "Submit"}</button>
+            <button type="submit" className="btn btn-primary w-100 py-2">
+                  {isSignIn ? "Sign in" : "Submit"}
+            </button>
   
             {isSignIn && (
               <div className="auth-footer">
