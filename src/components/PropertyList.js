@@ -1,148 +1,152 @@
-// src/components/PropertyList.js
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 
+const TABS = ["Featured", "For Sell", "For Rent"];
+
 const PropertyList = ({ filters = {} }) => {
-  const [items, setItems]       = useState([]);
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState(null);
+  const [items, setItems]     = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError]     = useState(null);
   const [activeTab, setActiveTab] = useState("Featured");
 
-  // Собираем query-string из фильтров + таба
+  const stableFilters = useMemo(() => filters, [
+    filters.keyword,
+    filters.type,
+    filters.location,
+    filters.ads_type,
+  ]);
+
   const getQueryParams = () => {
-    const params = new URLSearchParams();
-
-    // Общие фильтры
-    if (filters.keyword)   params.append("keyword", filters.keyword);
-    if (filters.type)      params.append("property_type", filters.type);
-    if (filters.location)  params.append("city", filters.location);
-
-    // Тип объявления из родителя (например, ads_type=1 для BuyProperty)
-    if (filters.ads_type)  params.append("ads_type", filters.ads_type);
-
-    // Таб-фильтрация: For Sell / For Rent
-    if (activeTab === "For Sell") params.set("ads_type", 1);
-    if (activeTab === "For Rent") params.set("ads_type", 2);
-
+    const p = new URLSearchParams();
+    if (stableFilters.keyword)  p.append("keyword", stableFilters.keyword);
+    if (stableFilters.type)     p.append("name_apartment", stableFilters.type); 
+    if (stableFilters.location) p.append("city", stableFilters.location);
+    if (activeTab === "For Sell") p.set("ads_type", "1");
+    if (activeTab === "For Rent") p.set("ads_type", "2");
     // Featured — не трогаем ads_type
-    return params.toString();
+    return p.toString();
   };
 
-  // Запрашиваем список при изменении filters или tabs
   useEffect(() => {
-  setLoading(true);
-  setError(null);
-
-  // Собираем query-параметры прямо здесь
-  const params = new URLSearchParams();
-  if (filters.keyword)   params.append("keyword", filters.keyword);
-  if (filters.type)      params.append("property_type", filters.type);
-  if (filters.location)  params.append("city", filters.location);
-  if (filters.ads_type)  params.append("ads_type", filters.ads_type);
-  if (activeTab === "For Sell") params.set("ads_type", 1);
-  if (activeTab === "For Rent") params.set("ads_type", 2);
-
-  const queryString = params.toString();
-  const url = `http://localhost:8080/api/v1/content/ads?${queryString}`;
-
-  fetch(url, {
-    headers: { "Accept": "application/json" }
-  })
-    .then(res => {
-      if (!res.ok) throw new Error(`Server error: ${res.status}`);
-      return res.json();
-    })
-    .then(data => {
-      setItems(data);
-      setLoading(false);
-    })
-    .catch(err => {
-      setError(err);
-      setLoading(false);
-    });
-}, [filters, activeTab]);
-
-
-  const tabs = ["Featured", "For Sell", "For Rent"];
+    const fetchAds = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const qs = getQueryParams();
+        const res = await fetch(`/api/v1/content/ads?${qs}`, {
+          credentials: "include",
+          headers: { "Accept": "application/json" },
+        });
+        if (res.status === 401) throw new Error("Please sign in to view properties");
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody.Message || `Server error ${res.status}`);
+        }
+        const data = await res.json();
+        setItems(Array.isArray(data) ? data : []);
+      } catch (e) {
+        setError(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAds();
+  }, [activeTab, stableFilters]);
 
   return (
     <div className="container-xxl py-5">
       <div className="container">
-        {/* Заголовок + Таб-фильтры */}
+        {/* Заголовок + табы */}
         <div className="row g-0 gx-5 align-items-end mb-4">
-          <div className="col-lg-6">
-            <h1 className="mb-3">Property Listing</h1>
-          </div>
+          <div className="col-lg-6"><h1 className="mb-3">Property Listing</h1></div>
           <div className="col-lg-6 text-lg-end">
             <ul className="nav nav-pills d-inline-flex mb-3">
-              {tabs.map(tab => (
+              {TABS.map(tab => (
                 <li className="nav-item me-2" key={tab}>
                   <button
                     className={`btn btn-outline-primary ${activeTab === tab ? "active" : ""}`}
                     onClick={() => setActiveTab(tab)}
-                  >
-                    {tab}
-                  </button>
+                  >{tab}</button>
                 </li>
               ))}
             </ul>
           </div>
         </div>
 
-        {/* Статусы загрузки / ошибки / пустого списка */}
+        {/* Статусы */}
         {loading && <p>Loading properties...</p>}
         {error && <p className="text-danger">Error: {error.message}</p>}
-        {!loading && !error && items.length === 0 && <p>No properties found.</p>}
+        {!loading && !error && (items?.length ?? 0) === 0 && <p>No properties found.</p>}
 
-        {/* Сетка карточек */}
-        <div className="row g-4">
-          {!loading && !error && items.map((d) => (
-            <div className="col-lg-4 col-md-6" key={d.id}>
-              <div className="property-item d-flex flex-column h-100 rounded overflow-hidden">
-                <div className="position-relative overflow-hidden">
-                  <Link to={`/property-details/${d.id}`}>
-                    <img
-                      className="img-fluid"
-                      src={d.url_photos?.[0] || ""}
-                      alt={d.title}
-                    />
-                  </Link>
-                  <span className="bg-primary text-white badge position-absolute top-0 start-0 m-3">
-                    {d.ads_type === 1 ? "For Sell" : "For Rent"}
-                  </span>
-                  <span className="bg-white text-primary badge position-absolute bottom-0 start-0 m-3">
-                    {d.property_type}
-                  </span>
-                </div>
-                <div className="p-4 pb-0">
-                  <h5 className="text-primary mb-3">{d.price}</h5>
-                  <Link to={`/property-details/${d.id}`} className="d-block h5 mb-2">
-                    {d.title}
-                  </Link>
-                  <p><i className="fa fa-map-marker-alt text-primary me-2"></i>{d.location}</p>
-                </div>
-                <div className="d-flex border-top">
-                  <small className="flex-fill text-center border-end py-2">
-                    <i className="fa fa-ruler-combined text-primary me-2"></i>
-                    {d.size} m²
-                  </small>
-                  <small className="flex-fill text-center border-end py-2">
-                    <i className="fa fa-bed text-primary me-2"></i>
-                    {d.bedrooms} Bed
-                  </small>
-                  <small className="flex-fill text-center py-2">
-                    <i className="fa fa-bath text-primary me-2"></i>
-                    {d.bathrooms} Bath
-                  </small>
-                </div>
-              </div>
-            </div>
-          ))}
+        {/* Карточки */}
+      <div className="row g-4">
+        {items.map(d => {
+          // берём либо только имя файла (ad4_…), либо полный URL из бэка
+          const mainPhotoFile =
+            d.url_photos?.find(p => p.main_url)?.url ||
+            d.url_photos?.[0]?.url ||
+            "";
+
+          // если это уже http://… — оставляем; иначе добавляем префикс
+          const mainPhoto = mainPhotoFile
+            ? (mainPhotoFile.startsWith('http')
+                ? mainPhotoFile
+                : `/ads-photos/${mainPhotoFile}`)
+            : "";
+
+
+
+           return (
+    <div className="col-lg-4 col-md-6" key={d.id}>
+      <div className="property-item d-flex flex-column h-100 rounded overflow-hidden">
+        <div className="position-relative overflow-hidden">
+          <Link to={`/property-details/${d.id}`}>
+            <img
+              className="img-fluid"
+              src={mainPhoto}
+              alt={d.title}
+            />
+          </Link>
+          <span className="bg-primary text-white badge position-absolute top-0 start-0 m-3">
+            {d.ads_type === 1 ? "For Sell" : "For Rent"}
+          </span>
         </div>
 
-        {/* Кнопка «Browse More» */}
+        <div className="p-4 pb-0">
+          {/* здесь форматируем цену */}
+          <h5 className="text-primary mb-3">
+            ₸{Number(d.price).toLocaleString('ru-RU')}
+          </h5>
+          <Link to={`/property-details/${d.id}`} className="d-block h5 mb-2">
+            {d.title}
+          </Link>
+          <p>
+            <i className="fa fa-map-marker-alt text-primary me-2"></i>
+            {`${d.address}, ${d.city}, ${d.district}`}
+          </p>
+        </div>
+
+        <div className="d-flex border-top">
+          <small className="flex-fill text-center border-end py-2">
+            <i className="fa fa-ruler-combined text-primary me-2"></i>
+            {d.square} m²
+          </small>
+          <small className="flex-fill text-center py-2">
+            <i className="fa fa-bed text-primary me-2"></i>
+            {d.num_rooms} Bed
+          </small>
+        </div>
+      </div>
+    </div>
+  );
+})}
+      </div>
+
+        {/* Load more */}
         <div className="text-center mt-4">
-          <button className="btn btn-primary py-3 px-5">Browse More Property</button>
+          <button className="btn btn-primary py-3 px-5">
+            Browse More Property
+          </button>
         </div>
       </div>
     </div>

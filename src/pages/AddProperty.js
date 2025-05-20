@@ -1,8 +1,7 @@
 // src/components/AddProperty.js
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
+import Layout from "../components/Layout";
 import ApartmentForm from "../components/ApartmentForm";
 import "../assets/css/style.css";
 
@@ -26,10 +25,11 @@ const AddProperty = () => {
   );
 
   return (
+    <Layout>
     <div className="container-fluid p-0 bg-white">
-      <Navbar />
+      
 
-      <div className="container py-5 mt-5">
+      <div className="container pt-5 mt-5">
         <h2 className="mb-4">Create an Listing</h2>
 
         <div className="row g-4">
@@ -90,8 +90,8 @@ const AddProperty = () => {
         )}
       </div>
 
-      <Footer />
     </div>
+    </Layout>
   );
 };
 

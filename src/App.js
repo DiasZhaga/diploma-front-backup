@@ -15,6 +15,7 @@ import SubscriptionPlans from "./pages/SubscriptionPlans";
 import AddProperty from "./pages/AddProperty";
 import MyAds from "./pages/MyAds";  
 import Messages from "./pages/Messages";
+import EditAdPage from "./pages/EditAd";
 
 const App = () => {
   const [loading, setLoading]   = useState(true);
@@ -57,6 +58,7 @@ const App = () => {
           <Route path="/subscribe"          element={<SubscriptionPlans />} />
           <Route path="/sell-property"      element={<AddProperty />} />
           <Route path="/my-ads"             element={<MyAds />} />
+          <Route path="/edit-ad/:id"  element={<EditAdPage />} />
           <Route path="/messages" element={<Messages />} />
           {/* TODO: edit-ad and 404 routes */}
         </Routes>
